@@ -30,6 +30,15 @@ class MessagesViewController: MSMessagesAppViewController {
         section.interGroupSpacing = 10
         return section
     }
+    private static var threeItemSection: NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.3), heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(80))
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 10
+        return section
+    }
     
     private static var oneItemSection: NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(1.0))
@@ -83,7 +92,7 @@ class MessagesViewController: MSMessagesAppViewController {
                     return animalSection
                 // trees
                 case 3:
-                    let treeSection = MessagesViewController.fiveItemSection
+                    let treeSection = MessagesViewController.threeItemSection
                     let titleSectionHeader = NSCollectionLayoutBoundarySupplementaryItem(
                         layoutSize: headerFooterSize, elementKind: TitleSupplementaryView.reuseIdentifier, alignment: .topLeading)
                     treeSection.boundarySupplementaryItems = [titleSectionHeader]
@@ -157,6 +166,7 @@ class MessagesViewController: MSMessagesAppViewController {
     }
     
     private func populateCollection() {
+
         var snapshot = NSDiffableDataSourceSnapshot<SectionType, MSSticker>()
         snapshot.appendSections(SectionType.allCases)
         
@@ -167,26 +177,35 @@ class MessagesViewController: MSMessagesAppViewController {
             return try? MSSticker(contentsOfFileURL: url, localizedDescription: name)
         }), toSection: .animals)
         
-        snapshot.appendItems(["tree-1", "tree-2", "tree-3", "tree-4"].compactMap({ (name) -> MSSticker? in
+        snapshot.appendItems(["tree-1", "tree-2", "tree-3"].compactMap({ (name) -> MSSticker? in
             guard let url = Bundle.main.url(forResource: name, withExtension: "png") else {
                 return nil
             }
             return try? MSSticker(contentsOfFileURL: url, localizedDescription: name)
         }), toSection: .trees)
-        
-        snapshot.appendItems(["Happy " + formatter.string(from: Date())].compactMap({ (name) -> MSSticker? in
-            let label = UILabel()
-            label.text = name
-            guard let image = label.image(),
-                  let data = image.pngData(),
-                  let baseURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last,
-                  let url = URL(string: "\(baseURL.appendingPathComponent("\(name).png"))"),
-                  (try? data.write(to: url)) != nil else {
-                print("write failed")
+        snapshot.appendItems(["tree-1", "tree-2", "tree-3"].compactMap({ (name) -> MSSticker? in
+            guard let url = Bundle.main.url(forResource: name, withExtension: "png") else {
                 return nil
             }
             return try? MSSticker(contentsOfFileURL: url, localizedDescription: name)
-        }), toSection: .days)
+        }), toSection: .trees)
+        let shoppingList: [String] = ["test", "test1"]
+        for val in shoppingList{
+            snapshot.appendItems([val].compactMap({ (name) -> MSSticker? in
+                let label = UILabel()
+                label.text = name
+                guard let image = label.image(),
+                      let data = image.pngData(),
+                      let baseURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last,
+                      let url = URL(string: "\(baseURL.appendingPathComponent("\(name).png"))"),
+                      (try? data.write(to: url)) != nil else {
+                    print("write failed")
+                    return nil
+                }
+                return try? MSSticker(contentsOfFileURL: url, localizedDescription: name)
+            }), toSection: .days)
+            
+        }
         
         datasource.apply(snapshot, animatingDifferences: true, completion: nil)
     }
